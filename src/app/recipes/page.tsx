@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Recipe, MealType, MEAL_TYPES } from '@/types/recipe';
 import RecipeCard from '@/components/RecipeCard';
 import { ChefHat, Search, Loader2, Plus, X } from 'lucide-react';
 
-export default function RecipesPage() {
+function RecipesContent() {
     const searchParams = useSearchParams();
 
     const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -190,5 +190,20 @@ export default function RecipesPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function RecipesPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mx-auto mb-3" />
+                    <p className="text-sm text-slate-500 font-medium">Loading recipes...</p>
+                </div>
+            </div>
+        }>
+            <RecipesContent />
+        </Suspense>
     );
 }
