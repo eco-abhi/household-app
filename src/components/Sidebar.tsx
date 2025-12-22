@@ -11,8 +11,7 @@ import {
     Menu,
     X,
     ChevronLeft,
-    ChevronRight,
-    Settings
+    ChevronRight
 } from 'lucide-react';
 
 const navItems = [
@@ -143,25 +142,7 @@ export default function Sidebar() {
                     </nav>
 
                     {/* Footer */}
-                    <div className={`border-t border-slate-200 ${isCollapsed ? 'p-3' : 'p-4'} space-y-1`}>
-                        <Link
-                            href="/settings"
-                            className={`
-                group relative flex items-center gap-3 rounded-lg transition-all text-slate-600 hover:bg-slate-100 hover:text-slate-900
-                ${isCollapsed ? 'lg:justify-center p-3' : 'px-3 py-2.5'}
-              `}
-                        >
-                            <Settings className="w-5 h-5 shrink-0" />
-                            <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${isCollapsed ? 'lg:w-0 lg:opacity-0 lg:hidden' : 'w-auto opacity-100'}`}>
-                                Settings
-                            </span>
-                            {isCollapsed && (
-                                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap hidden lg:block z-50">
-                                    Settings
-                                </div>
-                            )}
-                        </Link>
-
+                    <div className={`border-t border-slate-200 ${isCollapsed ? 'p-3' : 'p-4'}`}>
                         <button
                             onClick={toggleCollapsed}
                             className={`
