@@ -52,8 +52,8 @@ export async function POST(
         // Remove item from source store
         const [movedItem] = sourceStore.items.splice(itemIndex, 1);
 
-        // Add item to target store (unchecked)
-        targetStore.items.push({
+        // Add item to target store (unchecked) - cast to any to avoid TypeScript errors with _id generation
+        (targetStore.items as any).push({
             name: movedItem.name,
             quantity: movedItem.quantity,
             checked: false,
