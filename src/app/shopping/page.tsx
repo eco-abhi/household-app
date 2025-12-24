@@ -218,6 +218,35 @@ export default function ShoppingPage() {
         setEditQty('');
     };
 
+    const startMove = (item: ShoppingItem) => {
+        setMoveItemId(item._id);
+        setSwipedItem(null);
+    };
+
+    const moveItemToStore = async (targetStoreId: string) => {
+        if (!moveItemId || !activeStore || !targetStoreId) return;
+
+        try {
+            const response = await fetch(`/api/stores/${activeStore}/items/move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ itemId: moveItemId, targetStoreId }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                // Update both source and target stores
+                setStores(stores.map(s => {
+                    if (s._id === activeStore) return data.data.sourceStore;
+                    if (s._id === targetStoreId) return data.data.targetStore;
+                    return s;
+                }));
+                setMoveItemId(null);
+            }
+        } catch (error) {
+            console.error('Error moving item:', error);
+        }
+    };
+
     const currentStore = stores.find(s => s._id === activeStore);
     const uncheckedItems = currentStore?.items.filter(i => !i.checked) || [];
     const checkedItems = currentStore?.items.filter(i => i.checked) || [];
@@ -365,7 +394,7 @@ export default function ShoppingPage() {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setMoveItemId(item._id);
+                                                startMove(item);
                                             }}
                                             className="h-full px-3 bg-blue-500 text-white font-semibold flex items-center justify-center pointer-events-auto shrink-0"
                                         >
@@ -514,12 +543,15 @@ export default function ShoppingPage() {
                                     .map(store => (
                                         <button
                                             key={store._id}
-                                            onClick={() => moveItem(moveItemId, store._id)}
-                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
-                                            style={{ borderLeft: `4px solid ${store.color}` }}
+                                            onClick={() => moveItemToStore(store._id)}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 active:scale-[0.98] transition-all text-left border border-slate-100"
                                         >
-                                            <StoreIcon className="w-5 h-5" style={{ color: store.color }} />
-                                            <span className="font-semibold text-slate-900">{store.name}</span>
+                                            <div
+                                                className="w-4 h-4 rounded-full shrink-0"
+                                                style={{ backgroundColor: store.color }}
+                                            />
+                                            <span className="font-semibold text-slate-900 flex-1 min-w-0 truncate">{store.name}</span>
+                                            <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
                                         </button>
                                     ))}
                             </div>

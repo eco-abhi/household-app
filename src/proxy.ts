@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     // TEMPORARY: Disable auth for testing iframe
     // TODO: Re-enable authentication after iframe is working
     return NextResponse.next();
@@ -35,3 +35,4 @@ export const config = {
         '/((?!_next/static|_next/image|favicon.ico).*)',
     ],
 };
+
