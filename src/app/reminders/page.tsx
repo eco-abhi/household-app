@@ -10,6 +10,13 @@ type RecurrenceType = 'none' | 'daily' | 'every_other_day' | 'weekly' | 'biweekl
 type Category = 'replace' | 'maintenance' | 'general';
 type Priority = 'low' | 'medium' | 'high';
 
+interface Member {
+    _id: string;
+    name: string;
+    email?: string;
+    color: string;
+}
+
 interface Reminder {
     _id: string;
     title: string;
@@ -19,6 +26,7 @@ interface Reminder {
     recurrence: RecurrenceType;
     category: Category;
     priority: Priority;
+    assignee?: Member;
 }
 
 const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
@@ -46,6 +54,7 @@ const PRIORITY_STYLES = {
 
 export default function RemindersPage() {
     const [reminders, setReminders] = useState<Reminder[]>([]);
+    const [members, setMembers] = useState<Member[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,6 +73,7 @@ export default function RemindersPage() {
         recurrence: 'none' as RecurrenceType,
         category: 'general' as Category,
         priority: 'medium' as Priority,
+        assignee: '' as string,
     });
 
     // Detect screen size for threshold 1024px
@@ -79,6 +89,7 @@ export default function RemindersPage() {
 
     useEffect(() => {
         fetchReminders();
+        fetchMembers();
     }, []);
 
     const fetchReminders = async () => {
@@ -90,6 +101,16 @@ export default function RemindersPage() {
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchMembers = async () => {
+        try {
+            const response = await fetch('/api/members');
+            const data = await response.json();
+            if (data.success) setMembers(data.data);
+        } catch (error) {
+            console.error('Error:', error);
         }
     };
 
@@ -127,6 +148,7 @@ export default function RemindersPage() {
             recurrence: reminder.recurrence,
             category: reminder.category,
             priority: reminder.priority,
+            assignee: reminder.assignee?._id || '',
         });
         setSwipedItem(null);
         setShowModal(true);
@@ -168,7 +190,7 @@ export default function RemindersPage() {
     const resetForm = () => {
         setFormData({
             title: '', description: '', dueDate: '',
-            recurrence: 'none', category: 'general', priority: 'medium',
+            recurrence: 'none', category: 'general', priority: 'medium', assignee: '',
         });
     };
 
@@ -309,6 +331,19 @@ export default function RemindersPage() {
                                                 {RECURRENCE_OPTIONS.find(r => r.value === reminder.recurrence)?.label}
                                             </span>
                                         )}
+                                        {reminder.assignee && (
+                                            <span
+                                                className="px-3 py-1 rounded-full text-xs font-semibold text-white inline-flex items-center gap-1.5"
+                                                style={{ backgroundColor: reminder.assignee.color }}
+                                            >
+                                                <div
+                                                    className="w-4 h-4 rounded-full bg-white/30 flex items-center justify-center text-[10px] font-bold"
+                                                >
+                                                    {reminder.assignee.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                {reminder.assignee.name}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -380,6 +415,21 @@ export default function RemindersPage() {
                                     <option value="low">Low Priority</option>
                                     <option value="medium">Medium Priority</option>
                                     <option value="high">High Priority</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Assign To</label>
+                                <select
+                                    value={formData.assignee}
+                                    onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
+                                    className="w-full px-4 py-4 bg-gray-50 border-2 rounded-2xl outline-none focus:border-purple-400 transition-colors"
+                                >
+                                    <option value="">Unassigned</option>
+                                    {members.map(member => (
+                                        <option key={member._id} value={member._id}>
+                                            {member.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                             <button

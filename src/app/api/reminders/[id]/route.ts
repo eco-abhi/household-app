@@ -41,7 +41,7 @@ export async function GET(
     try {
         await connectToDatabase();
         const { id } = await params;
-        const reminder = await Reminder.findById(id);
+        const reminder = await Reminder.findById(id).populate('assignee');
 
         if (!reminder) {
             return NextResponse.json(
@@ -86,7 +86,7 @@ export async function PUT(
             }
         }
 
-        const reminder = await Reminder.findByIdAndUpdate(id, body, {
+        let reminder = await Reminder.findByIdAndUpdate(id, body, {
             new: true,
             runValidators: true,
         });
@@ -97,6 +97,9 @@ export async function PUT(
                 { status: 404 }
             );
         }
+
+        // Populate assignee
+        reminder = await reminder.populate('assignee');
 
         return NextResponse.json({ success: true, data: reminder });
     } catch (error) {

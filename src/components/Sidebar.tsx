@@ -8,6 +8,7 @@ import {
     ChefHat,
     ShoppingCart,
     CheckSquare,
+    Users,
     Menu,
     X,
     ChevronLeft,
@@ -19,6 +20,7 @@ const navItems = [
     { href: '/recipes', label: 'Recipes', icon: ChefHat },
     { href: '/shopping', label: 'Shopping Lists', icon: ShoppingCart },
     { href: '/reminders', label: 'Reminders', icon: CheckSquare },
+    { href: '/members', label: 'Members', icon: Users },
 ];
 
 export default function Sidebar() {

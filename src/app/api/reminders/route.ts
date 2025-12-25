@@ -6,7 +6,7 @@ import Reminder from '@/lib/models/Reminder';
 export async function GET() {
     try {
         await connectToDatabase();
-        const reminders = await Reminder.find().sort({ dueDate: 1 });
+        const reminders = await Reminder.find().populate('assignee').sort({ dueDate: 1 });
         return NextResponse.json({ success: true, data: reminders });
     } catch (error) {
         console.error('Error fetching reminders:', error);
