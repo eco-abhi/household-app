@@ -12,7 +12,8 @@ import {
     Menu,
     X,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    RefreshCw
 } from 'lucide-react';
 
 const navItems = [
@@ -143,7 +144,29 @@ export default function Sidebar() {
                     </nav>
 
                     {/* Footer / Toggle Section */}
-                    <div className={`border-t border-slate-200 overflow-hidden ${isCollapsed ? 'p-3' : 'p-4'}`}>
+                    <div className={`border-t border-slate-200 overflow-hidden ${isCollapsed ? 'p-3' : 'p-4'} space-y-1`}>
+                        {/* Refresh Button */}
+                        <button
+                            onClick={() => window.location.reload()}
+                            className={`
+                                group relative flex items-center gap-3 w-full rounded-lg transition-all text-slate-500 hover:bg-blue-50 hover:text-blue-600
+                                ${isCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'}
+                            `}
+                        >
+                            <RefreshCw className="w-5 h-5 shrink-0" />
+                            <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 overflow-hidden ${isCollapsed ? 'lg:w-0 lg:opacity-0' : 'w-auto opacity-100'}`}>
+                                Refresh
+                            </span>
+
+                            {/* Tooltip for collapsed state */}
+                            {isCollapsed && (
+                                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap hidden lg:block z-50">
+                                    Refresh
+                                </div>
+                            )}
+                        </button>
+
+                        {/* Collapse Toggle */}
                         <button
                             onClick={toggleCollapsed}
                             className={`
