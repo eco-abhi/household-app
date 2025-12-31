@@ -33,6 +33,7 @@ export default function Sidebar() {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(true);
     const [mounted, setMounted] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -44,6 +45,11 @@ export default function Sidebar() {
             setIsCollapsed(isTablet);
         }
     }, []);
+
+    useEffect(() => {
+        // Check if user is authenticated (not on login page)
+        setIsAuthenticated(pathname !== '/login');
+    }, [pathname]);
 
     const toggleCollapsed = () => {
         const newState = !isCollapsed;
@@ -180,26 +186,28 @@ export default function Sidebar() {
                             )}
                         </button>
 
-                        {/* Logout Button */}
-                        <button
-                            onClick={handleLogout}
-                            className={`
-                                group relative flex items-center gap-3 w-full rounded-lg transition-all text-slate-500 hover:bg-red-50 hover:text-red-600
-                                ${isCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'}
-                            `}
-                        >
-                            <LogOut className="w-5 h-5 shrink-0" />
-                            <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 overflow-hidden ${isCollapsed ? 'lg:w-0 lg:opacity-0' : 'w-auto opacity-100'}`}>
-                                Logout
-                            </span>
-
-                            {/* Tooltip for collapsed state */}
-                            {isCollapsed && (
-                                <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap hidden lg:block z-50">
+                        {/* Logout Button - Only show when authenticated */}
+                        {isAuthenticated && (
+                            <button
+                                onClick={handleLogout}
+                                className={`
+                                    group relative flex items-center gap-3 w-full rounded-lg transition-all text-slate-500 hover:bg-red-50 hover:text-red-600
+                                    ${isCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'}
+                                `}
+                            >
+                                <LogOut className="w-5 h-5 shrink-0" />
+                                <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 overflow-hidden ${isCollapsed ? 'lg:w-0 lg:opacity-0' : 'w-auto opacity-100'}`}>
                                     Logout
-                                </div>
-                            )}
-                        </button>
+                                </span>
+
+                                {/* Tooltip for collapsed state */}
+                                {isCollapsed && (
+                                    <div className="absolute left-full ml-2 px-3 py-2 bg-slate-900 text-white text-xs font-medium rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap hidden lg:block z-50">
+                                        Logout
+                                    </div>
+                                )}
+                            </button>
+                        )}
 
                         {/* Collapse Toggle */}
                         <button

@@ -12,6 +12,10 @@ export default function LoginPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Prevent multiple submissions
+        if (loading) return;
+        
         setLoading(true);
         setError('');
 
@@ -23,15 +27,15 @@ export default function LoginPage() {
             });
 
             if (res.ok) {
-                router.push('/');
-                router.refresh();
+                // Use window.location for full page reload to ensure cookie is properly set
+                window.location.href = '/';
             } else {
                 setError('Invalid PIN. Please try again.');
                 setPin('');
+                setLoading(false);
             }
         } catch (err) {
             setError('Something went wrong. Please try again.');
-        } finally {
             setLoading(false);
         }
     };
