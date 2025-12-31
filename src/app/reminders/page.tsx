@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Plus, Trash2, Check, Clock, RefreshCw,
     Loader2, X, Calendar, Bell, Pencil, User
@@ -55,6 +56,7 @@ const PRIORITY_STYLES = {
 };
 
 export default function RemindersPage() {
+    const router = useRouter();
     const [reminders, setReminders] = useState<Reminder[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +70,18 @@ export default function RemindersPage() {
     const [dragStart, setDragStart] = useState<number>(0);
     const [isDragging, setIsDragging] = useState(false);
     const [isMobileOrTablet, setIsMobileOrTablet] = useState(true); // Start as true to enable touch handlers
+    
+    // Prevent duplicate fetches
+    const isFetchingRef = useRef<{ reminders: boolean; members: boolean }>({ reminders: false, members: false });
+    
+    // Helper to check for authentication errors
+    const handleAuthError = (response: Response) => {
+        if (response.status === 401) {
+            router.push('/login');
+            return true;
+        }
+        return false;
+    };
 
     const [formData, setFormData] = useState({
         title: '',
@@ -113,26 +127,45 @@ export default function RemindersPage() {
     }, []);
 
     const fetchReminders = async () => {
+        // Prevent concurrent calls
+        if (isFetchingRef.current.reminders) return;
+        isFetchingRef.current.reminders = true;
+
         try {
             const timestamp = Date.now();
             const response = await fetch(`/api/reminders?_=${timestamp}`, { cache: 'no-store' });
+            
+            // Check for auth errors
+            if (handleAuthError(response)) return;
+            
             const data = await response.json();
             if (data.success) setReminders(data.data);
         } catch (error) {
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
+            isFetchingRef.current.reminders = false;
         }
     };
 
     const fetchMembers = async () => {
+        // Prevent concurrent calls
+        if (isFetchingRef.current.members) return;
+        isFetchingRef.current.members = true;
+
         try {
             const timestamp = Date.now();
             const response = await fetch(`/api/members?_=${timestamp}`, { cache: 'no-store' });
+            
+            // Check for auth errors
+            if (handleAuthError(response)) return;
+            
             const data = await response.json();
             if (data.success) setMembers(data.data);
         } catch (error) {
             console.error('Error:', error);
+        } finally {
+            isFetchingRef.current.members = false;
         }
     };
 

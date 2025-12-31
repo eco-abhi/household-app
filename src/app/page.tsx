@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ChefHat, ShoppingCart, Bell, ArrowRight,
@@ -38,6 +39,7 @@ interface MemberStats {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     recipes: 0,
     pendingItems: 0,
@@ -48,6 +50,18 @@ export default function Home() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [pointsStats, setPointsStats] = useState<MemberStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Prevent duplicate fetches
+  const isFetchingRef = useRef<boolean>(false);
+  
+  // Helper to check for authentication errors
+  const handleAuthError = (response: Response) => {
+    if (response.status === 401) {
+      router.push('/login');
+      return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     // Fetch on mount
@@ -68,8 +82,11 @@ export default function Home() {
   }, []);
 
   const fetchDashboardData = async () => {
+    // Prevent concurrent calls
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     try {
-      // Add cache busting to ensure fresh data
       const timestamp = Date.now();
       const [recipesRes, storesRes, remindersRes, statsRes] = await Promise.all([
         fetch(`/api/recipes?_=${timestamp}`, { cache: 'no-store' }),
@@ -77,6 +94,13 @@ export default function Home() {
         fetch(`/api/reminders?_=${timestamp}`, { cache: 'no-store' }),
         fetch(`/api/reminders/stats?_=${timestamp}`, { cache: 'no-store' }),
       ]);
+
+      // Check for auth errors on any response
+      if (handleAuthError(recipesRes) || handleAuthError(storesRes) || 
+          handleAuthError(remindersRes) || handleAuthError(statsRes)) {
+        isFetchingRef.current = false;
+        return;
+      }
 
       // Check if responses are OK before parsing
       const parseJson = async (res: Response, name: string) => {
@@ -126,6 +150,7 @@ export default function Home() {
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   };
 

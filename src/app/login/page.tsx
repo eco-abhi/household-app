@@ -7,16 +7,16 @@ import { Home, Loader2 } from 'lucide-react';
 export default function LoginPage() {
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Prevent multiple submissions
-        if (loading) return;
-        
-        setLoading(true);
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
         setError('');
 
         try {
@@ -24,19 +24,26 @@ export default function LoginPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pin }),
+                credentials: 'same-origin',
             });
 
-            if (res.ok) {
-                // Use window.location for full page reload to ensure cookie is properly set
-                window.location.href = '/';
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                // Cookie is now set - force Next.js to revalidate and navigate
+                // This triggers a server-side check with the new cookie
+                // router.refresh(); // Clear client cache
+                router.push('/'); // Navigate to dashboard
+                // Don't reset isSubmitting - keep spinner showing during navigation
             } else {
-                setError('Invalid PIN. Please try again.');
+                // Invalid PIN
+                setError(data.error || 'Invalid PIN. Please try again.');
                 setPin('');
-                setLoading(false);
+                setIsSubmitting(false);
             }
         } catch (err) {
             setError('Something went wrong. Please try again.');
-            setLoading(false);
+            setIsSubmitting(false);
         }
     };
 
@@ -66,7 +73,7 @@ export default function LoginPage() {
                             maxLength={6}
                             className="w-full px-5 py-4 bg-slate-50 border-2 border-slate-200 rounded-2xl text-slate-900 text-center text-2xl font-bold tracking-widest placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                             required
-                            disabled={loading}
+                            disabled={isSubmitting}
                         />
                     </div>
 
@@ -78,13 +85,13 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={isSubmitting}
                         className="w-full px-6 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-2xl font-bold text-lg shadow-xl shadow-emerald-200/50 hover:shadow-2xl hover:shadow-emerald-200/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                     >
-                        {loading ? (
+                        {isSubmitting ? (
                             <span className="flex items-center justify-center gap-2">
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                Verifying...
+                                Logging in...
                             </span>
                         ) : (
                             'Enter'

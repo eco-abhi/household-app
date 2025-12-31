@@ -3,6 +3,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import AutoRefresh from "@/components/AutoRefresh";
 import StyleChecker from "@/components/StyleChecker";
+import AuthGuard from "@/components/AuthGuard";
 
 export const metadata: Metadata = {
   title: "Pandey's Household",
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body suppressHydrationWarning className="antialiased bg-slate-50">
         <StyleChecker />
         <AutoRefresh />
+        <AuthGuard />
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 pt-16 lg:pt-0">

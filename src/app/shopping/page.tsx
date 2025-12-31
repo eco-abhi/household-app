@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Plus, Trash2, Check, ShoppingCart, Store as StoreIcon,
     Loader2, X, ArrowRight
@@ -31,6 +32,7 @@ const DEFAULT_COLORS = [
 ];
 
 export default function ShoppingPage() {
+    const router = useRouter();
     const [stores, setStores] = useState<Store[]>([]);
     const [selectedEvent, setSelectedEvent] = useState<string>('all');
     const [activeStore, setActiveStore] = useState<string | null>(null);
@@ -48,6 +50,18 @@ export default function ShoppingPage() {
     const [isDragging, setIsDragging] = useState(false);
     const [isMobileOrTablet, setIsMobileOrTablet] = useState(true); // Start as true to enable touch handlers
     const [moveItemId, setMoveItemId] = useState<string | null>(null);
+    
+    // Prevent duplicate fetches
+    const isFetchingRef = useRef<boolean>(false);
+    
+    // Helper to check for authentication errors
+    const handleAuthError = (response: Response) => {
+        if (response.status === 401) {
+            router.push('/login');
+            return true;
+        }
+        return false;
+    };
     const [moveItemName, setMoveItemName] = useState('');
     const [editingItem, setEditingItem] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
@@ -98,9 +112,17 @@ export default function ShoppingPage() {
     }, [selectedEvent, stores, activeStore]);
 
     const fetchStores = async () => {
+        // Prevent concurrent calls
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+
         try {
             const timestamp = Date.now();
             const response = await fetch(`/api/stores?_=${timestamp}`, { cache: 'no-store' });
+            
+            // Check for auth errors
+            if (handleAuthError(response)) return;
+            
             const data = await response.json();
             if (data.success) {
                 setStores(data.data);
@@ -112,6 +134,7 @@ export default function ShoppingPage() {
             console.error('Error fetching stores:', error);
         } finally {
             setIsLoading(false);
+            isFetchingRef.current = false;
         }
     };
 

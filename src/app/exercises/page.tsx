@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Pencil, Loader2, Dumbbell, User, Sparkles, X, Library, Check, ExternalLink, Circle, CheckCircle2 } from 'lucide-react';
 
 type BodyPart = 'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'abs' | 'cardio' | 'full_body';
@@ -49,11 +50,18 @@ const BODY_PARTS: { value: BodyPart; label: string; icon: string; color: string 
     { value: 'full_body', label: 'Full Body', icon: '🎯', color: 'from-indigo-400 to-indigo-600' },
 ];
 
+// Helper to get today's day of the week
+const getTodaysDayOfWeek = (): DayOfWeek => {
+    const days: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    return days[new Date().getDay()];
+};
+
 export default function ExercisesPage() {
+    const router = useRouter();
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('');
-    const [selectedDay, setSelectedDay] = useState<DayOfWeek>('monday');
+    const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getTodaysDayOfWeek());
     const [isLoading, setIsLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [showAIModal, setShowAIModal] = useState(false);
@@ -72,6 +80,22 @@ export default function ExercisesPage() {
     const [dragStart, setDragStart] = useState<number>(0);
     const [isDragging, setIsDragging] = useState(false);
     const [isMobileOrTablet, setIsMobileOrTablet] = useState(true);
+    
+    // Prevent duplicate fetches
+    const isFetchingRef = useRef<{ members: boolean; exercises: boolean; all: boolean }>({ 
+        members: false, 
+        exercises: false, 
+        all: false 
+    });
+    
+    // Helper to check for authentication errors
+    const handleAuthError = (response: Response) => {
+        if (response.status === 401) {
+            router.push('/login');
+            return true;
+        }
+        return false;
+    };
 
     const [formData, setFormData] = useState({
         name: '',
@@ -127,9 +151,17 @@ export default function ExercisesPage() {
     }, [selectedMember, selectedDay]);
 
     const fetchMembers = async () => {
+        // Prevent concurrent calls
+        if (isFetchingRef.current.members) return;
+        isFetchingRef.current.members = true;
+
         try {
             const timestamp = Date.now();
             const response = await fetch(`/api/members?_=${timestamp}`, { cache: 'no-store' });
+            
+            // Check for auth errors
+            if (handleAuthError(response)) return;
+            
             const data = await response.json();
             if (data.success && data.data.length > 0) {
                 setMembers(data.data);
@@ -139,11 +171,18 @@ export default function ExercisesPage() {
             }
         } catch (error) {
             console.error('Error:', error);
+        } finally {
+            isFetchingRef.current.members = false;
         }
     };
 
     const fetchExercises = async () => {
         if (!selectedMember) return;
+        
+        // Prevent concurrent calls
+        if (isFetchingRef.current.exercises) return;
+        isFetchingRef.current.exercises = true;
+
         try {
             const response = await fetch(`/api/exercises?memberId=${selectedMember}&dayOfWeek=${selectedDay}`, {
                 cache: 'no-store',
@@ -151,6 +190,10 @@ export default function ExercisesPage() {
                     'Cache-Control': 'no-cache',
                 },
             });
+            
+            // Check for auth errors
+            if (handleAuthError(response)) return;
+            
             const data = await response.json();
             if (data.success) {
                 setExercises(data.data || []);
@@ -159,11 +202,17 @@ export default function ExercisesPage() {
             console.error('Error fetching exercises:', error);
         } finally {
             setIsLoading(false);
+            isFetchingRef.current.exercises = false;
         }
     };
 
     const fetchAllExercises = async () => {
         if (!selectedMember) return;
+        
+        // Prevent concurrent calls
+        if (isFetchingRef.current.all) return;
+        isFetchingRef.current.all = true;
+
         try {
             const response = await fetch(`/api/exercises?memberId=${selectedMember}`, {
                 cache: 'no-store',
@@ -171,10 +220,16 @@ export default function ExercisesPage() {
                     'Cache-Control': 'no-cache',
                 },
             });
+            
+            // Check for auth errors
+            if (handleAuthError(response)) return;
+            
             const data = await response.json();
             if (data.success) setAllExercises(data.data);
         } catch (error) {
             console.error('Error fetching all exercises:', error);
+        } finally {
+            isFetchingRef.current.all = false;
         }
     };
 

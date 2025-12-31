@@ -7,19 +7,23 @@ export async function POST(request: Request) {
 
         // Validate PIN against environment variable
         if (pin === process.env.HOUSEHOLD_PIN) {
-            const cookieStore = await cookies();
-
+            // Create response first
+            const response = NextResponse.json({ success: true });
+            
             // Set secure auth cookie (valid for 30 days)
-            // SameSite=none is required for iframe/cross-origin contexts
-            cookieStore.set('household-auth', process.env.AUTH_SECRET!, {
+            // Use 'lax' for better compatibility with incognito/private browsing
+            const isProduction = process.env.NODE_ENV === 'production';
+            
+            // Set cookie directly in the response
+            response.cookies.set('household-auth', process.env.AUTH_SECRET!, {
                 httpOnly: true,
-                secure: true, // Always secure for SameSite=none
-                sameSite: 'none', // Allow cross-origin (required for iframes)
+                secure: isProduction, // Only require HTTPS in production
+                sameSite: 'lax', // Better compatibility than 'none'
                 maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
                 path: '/',
             });
-
-            return NextResponse.json({ success: true });
+            
+            return response;
         }
 
         // Invalid PIN
