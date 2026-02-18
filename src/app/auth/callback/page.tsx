@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 const APP_CALLBACK_URL =
   process.env.NEXT_PUBLIC_AUTH_CALLBACK_APP_URL || 'gatherly://auth/callback';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const searchParams = useSearchParams();
   const [showFallback, setShowFallback] = useState(false);
 
@@ -62,5 +62,25 @@ export default function AuthCallbackPage() {
         </p>
       )}
     </div>
+  );
+}
+
+function CallbackFallback() {
+  return (
+    <div className="min-h-screen bg-[#F7F5F2] text-[#1A1A1A] flex flex-col items-center justify-center px-6 py-6 text-center">
+      <div
+        className="w-10 h-10 border-[3px] border-[#EDE9E3] border-t-[#2D9D8B] rounded-full animate-spin mb-4"
+        aria-hidden
+      />
+      <p className="m-0">Opening Gatherly…</p>
+    </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<CallbackFallback />}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
