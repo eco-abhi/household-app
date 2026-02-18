@@ -11,9 +11,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // Allow access to login page, auth API routes, and static files
+  // Allow access to login page, auth callback (Supabase → app redirect), auth API routes, and static files
   if (
     request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/auth/callback') ||
     request.nextUrl.pathname.startsWith('/api/auth') ||
     request.nextUrl.pathname.startsWith('/_next') ||
     request.nextUrl.pathname.startsWith('/icon.svg') ||
