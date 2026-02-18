@@ -10,8 +10,8 @@ export default function AuthGuard() {
     const lastCheckRef = useRef(0);
 
     useEffect(() => {
-        // Skip auth check on login page
-        if (pathname === '/login') return;
+        // Skip auth check on login and auth callback (Supabase → app redirect)
+        if (pathname === '/login' || pathname === '/auth/callback') return;
 
         // Check authentication status
         const checkAuth = async () => {
